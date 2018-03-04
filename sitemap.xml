@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://blog.minfive.com/2018/03/03/2018-03-03-vue-permission-control/</loc>
+    
+    <lastmod>2018-03-03T13:57:42.575Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://blog.minfive.com/2018/02/23/2018-02-23-css-hacker/</loc>
     
-    <lastmod>2018-02-23T15:10:09.505Z</lastmod>
+    <lastmod>2018-03-03T05:08:01.136Z</lastmod>
     
   </url>
   
@@ -37,14 +44,14 @@
   </url>
   
   <url>
-    <loc>http://blog.minfive.com/search/index.html</loc>
+    <loc>http://blog.minfive.com/about/index.html</loc>
     
     <lastmod>2017-10-22T13:27:55.725Z</lastmod>
     
   </url>
   
   <url>
-    <loc>http://blog.minfive.com/about/index.html</loc>
+    <loc>http://blog.minfive.com/search/index.html</loc>
     
     <lastmod>2017-10-22T13:27:55.725Z</lastmod>
     

